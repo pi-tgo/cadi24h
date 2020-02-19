@@ -215,7 +215,7 @@ ax.set_xlim(0,24)                    # set X limits (0h to 24h)
 ax.set_ylim(0,800)                   # set Y limits (min and max height in km)
 ax.set_title(title)
 ax.set_xlabel('UT TIME')
-ax.set_ylabel('Height (km)')
+ax.set_ylabel('Virtual height (km)')
 cbar = plt.colorbar(sc)
 cbar.set_label('Frequency (MHz)')
 
