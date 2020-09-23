@@ -211,7 +211,7 @@ fig, ax = plt.subplots()
 
 cm = plt.cm.get_cmap('jet')
 sc = plt.scatter(x, y, c=col, marker="_", s=22, cmap=cm)
-if (year == now.year) and (month == now.month) and (day == now.day):
+if (year == now.year) and (month_number == now.month) and (day == now.day):
     plt.axvline((now.hour + now.minute / 60), color='grey', alpha=0.5)
 ax.grid(True, which='both')
 ax.set_xlim(0, 24)  # set X limits (0h to 24h)
