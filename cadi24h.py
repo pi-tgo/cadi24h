@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 
 # this code is written for python >= 3.6 and require matplotlib and numpy
 #
@@ -205,16 +205,19 @@ y = list(matplotlib.cbook.flatten(height))
 col = list(matplotlib.cbook.flatten(ff))
 
 title = 'CADI ' + site + ' ' + ascii_datetime[1:8] + ascii_datetime[17:21]
+now = datetime.datetime.now()
 
 fig, ax = plt.subplots()
 
 cm = plt.cm.get_cmap('jet')
 sc = plt.scatter(x, y, c=col, marker="_", s=22, cmap=cm)
+if (year == now.year) and (month == now.month) and (day == now.day):
+    plt.axvline((now.hour + now.minute / 60), color='grey', alpha=0.5)
 ax.grid(True, which='both')
 ax.set_xlim(0, 24)  # set X limits (0h to 24h)
 ax.set_ylim(0, 800)  # set Y limits (min and max height in km)
 ax.set_title(title)
-ax.set_xlabel('UT TIME')
+ax.set_xlabel('Universal time')
 ax.set_ylabel('Virtual height (km)')
 cbar = plt.colorbar(sc)
 cbar.set_label('Frequency (MHz)')
