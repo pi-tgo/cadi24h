@@ -15,6 +15,7 @@ Supported formats eps, pdf, pgf, png, ps, raw, rgba, svg, svgz (depends on versi
 
 The code is written based on IDL code provided by Chris Meek
 
+The code is written based on IDL code obtained from the Canadian High Arctic Ionospheric Network (CHAIN) web pages; http://chain.physics.unb.ca/chain/.
 IDL code originally written by Ian Grant and modified by the same and JWM
 
 An example datafile (testdata.md49) is included in the repository.
