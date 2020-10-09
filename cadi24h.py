@@ -9,9 +9,11 @@
 # outputfile should have extension .png to produce png-files or .pdf to produce pdf-files.
 # supported formats eps, pdf, pgf, png, ps, raw, rgba, svg, svgz (depends on version of matplotlib)
 #
-# the code is written based on IDL code provided by Chris Meek
-# IDL code originally written by Ian Grant and modified by the same and JWM
+# The code is written based on IDL code obtained from the Canadian High Arctic Ionospheric Network (CHAIN) web pages;
+# http://chain.physics.unb.ca/chain/. IDL code originally written by Ian Grant and modified by the same and JWM
 #
+# Before using the code, change the file extention to the actual in the outer "for" statement.
+# Also change the symbol size in the final plt.scatter statement near the end of the code to your preference.
 
 import glob
 import sys
@@ -21,6 +23,7 @@ from time import strptime
 import numpy as np
 import matplotlib
 import copy
+
 # matplotlib.use('Agg')  # use the 'Agg' backend when $DISPLAY environment is not defined
 import matplotlib.pyplot as plt
 
@@ -34,8 +37,13 @@ height = []
 ff = []
 timeaxis = []
 
-for filename in glob.glob(sys.argv[1] + "/*.md49"):  # change file extention of CADI data if necessary
+for filename in glob.glob(sys.argv[1] + "/*.md2"):  # change file extention of CADI ionogram data if necessary
     f = open(filename, "rb")
+
+    f.seek(-1,2)     # go to the file end.
+    eof = f.tell()   # get the end of file location
+    f.seek(0,0)      # go back to file beginning
+
     try:
         # 1) read header information as described in the documentation p. 26-27
         site = f.read(3).decode("utf-8")
@@ -86,6 +94,7 @@ for filename in glob.glob(sys.argv[1] + "/*.md49"):  # change file extention of 
         nheights = int(maxheight / dheight + 1)
 
         times = []
+        time_in_record = []
         frebins = []
         frebins_x = []
         frebins_gain_flag = []
@@ -140,10 +149,16 @@ for filename in glob.glob(sys.argv[1] + "/*.md49"):  # change file extention of 
                         dopbin_x_freqx.append(freqx)
                         dopbin_x_hflag.append(hflag)
                         dopbin_x_dop_flag.append(dop_flag)
+                        time_in_record.append(hour + (minute + timex) / 60.)
                     flag = struct.unpack("<B", f.read(1))[0]  # next hflag/gainflag/FF
-            time_min = flag  # next record
+            time_min = flag 
+            if ((f.tell() - 1) != eof):
+                time_min = struct.unpack("<B", f.read(1))[0] # next record
     finally:
         f.close()
+
+    #print('time: %10.4f' %(hour + (minute + timex) / 60.))
+    #print(len(timeaxis), min(timeaxis), max(timeaxis))
 
     # frebins_gain_flag[] is the gainflag for each frequency
     # frebins_noise_flag[] is the noiseflag for each frequency
@@ -157,19 +172,22 @@ for filename in glob.glob(sys.argv[1] + "/*.md49"):  # change file extention of 
         frequency.append(freqs[dopbin_x_freqx[i]] / 1000000.0)
 
     # --- noise reduction - remove lowest and highest frequency for each height
-    for index in range(320):
+    for index in range(nheights):
         vh = 30 + index
         collection = [i for i, val in enumerate(dopbin_x_hflag) if val == vh]
 
         if len(collection) == 1:
             del dopbin_x_hflag[collection[0]]
             del frequency[collection[0]]
+            del time_in_record[collection[0]]
 
         if len(collection) == 2:
             del dopbin_x_hflag[collection[0]]
             del frequency[collection[0]]
+            del time_in_record[collection[0]]
             del dopbin_x_hflag[collection[1] - 1]
             del frequency[collection[1] - 1]
+            del time_in_record[collection[1] - 1]
 
         minimum = 11.
         maximum = 1.
@@ -185,20 +203,23 @@ for filename in glob.glob(sys.argv[1] + "/*.md49"):  # change file extention of 
             if minindex < maxindex:
                 del dopbin_x_hflag[minindex]
                 del frequency[minindex]
+                del time_in_record[minindex]
                 del dopbin_x_hflag[maxindex - 1]
                 del frequency[maxindex - 1]
+                del time_in_record[maxindex - 1]
             else:
                 del dopbin_x_hflag[maxindex]
                 del frequency[maxindex]
+                del time_in_record[maxindex]
                 del dopbin_x_hflag[minindex - 1]
                 del frequency[minindex - 1]
+                del time_in_record[minindex - 1]
     # --- end noise reduction
 
     height.append(list(np.array(dopbin_x_hflag) * 3))
     hhh = list(np.array(dopbin_x_hflag) * 3)
     ff.append(frequency)
-    ttt = [hour + minute / 60.] * len(hhh)
-    timeaxis.append([hour + (minute + 7.5) / 60.] * len(hhh))
+    timeaxis.append(time_in_record)
 
 x = list(matplotlib.cbook.flatten(timeaxis))
 y = list(matplotlib.cbook.flatten(height))
@@ -210,12 +231,12 @@ now = datetime.datetime.now()
 fig, ax = plt.subplots()
 
 cm = plt.cm.get_cmap('jet')
-sc = plt.scatter(x, y, c=col, marker="_", s=22, cmap=cm)
+sc = plt.scatter(x, y, c=col, marker="_", s=2, cmap=cm)
 if (year == now.year) and (month_number == now.month) and (day == now.day):
     plt.axvline((now.hour + now.minute / 60), color='grey', alpha=0.5)
 ax.grid(True, which='both')
 ax.set_xlim(0, 24)  # set X limits (0h to 24h)
-ax.set_ylim(0, 800)  # set Y limits (min and max height in km)
+ax.set_ylim(0, 600)  # set Y limits (min and max height in km)
 ax.set_title(title)
 ax.set_xlabel('Universal time')
 ax.set_ylabel('Virtual height (km)')
